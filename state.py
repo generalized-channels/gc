@@ -21,15 +21,15 @@ class State(ABC):
         pass
     
     @abstractmethod
-    def get_balance_l(self) -> float:
+    def get_balance_l(self) -> int:
         pass
 
     @abstractmethod
-    def get_balance_r(self) -> float:
+    def get_balance_r(self) -> int:
         pass
 
 class LightningState(State):
-    def __init__(self, ft: Transaction, id_l: Id, id_r: Id, val_l: float, val_r: float, fee: float, timelockCT: int=consts.timelockCT):
+    def __init__(self, ft: Transaction, id_l: Id, id_r: Id, val_l: int, val_r: int, fee: int, timelockCT: int=consts.timelockCT):
         self.ft = ft
         self.id_l = id_l
         self.id_r = id_r
@@ -45,8 +45,8 @@ class LightningState(State):
 
         ct_l = txs.get_standard_ct(TxInput(ft.get_txid(), 0), id_l, id_r, hash256(secret_rev), val_l, val_r, fee, l=True, timelock=0x2)
         ct_script = ct_l.outputs[0].script_pubkey.script
-        ct_l_to_l = txs.get_standard_ct_spend(TxInput(ct_l.get_txid(),0), id_l, ct_script, val_l-0.5*self.fee, fee)
-        ct_l_punish = txs.get_standard_ct_punish(TxInput(ct_l.get_txid(),0), self.id_r, ct_script, secret_rev, val_l-0.5*self.fee, fee)
+        ct_l_to_l = txs.get_standard_ct_spend(TxInput(ct_l.get_txid(),0), id_l, ct_script, int(val_l-0.5*self.fee), fee)
+        ct_l_punish = txs.get_standard_ct_punish(TxInput(ct_l.get_txid(),0), self.id_r, ct_script, secret_rev, int(val_l-0.5*self.fee), fee)
         self.transactions.append(('CT_l',ct_l)) 
         self.transactions.append(('CT_l_to_l',ct_l_to_l)) 
         self.transactions.append(('CT_l_punish',ct_l_punish)) # in the real world, this is added only when this state is revoked
@@ -54,8 +54,8 @@ class LightningState(State):
         secret_rev_r = gen_secret()
         ct_r = txs.get_standard_ct(TxInput(ft.get_txid(), 0), id_l, id_r, hash256(secret_rev_r), val_l, val_r, fee, l=False, timelock=0x2)
         ct_r_script = ct_r.outputs[0].script_pubkey.script
-        ct_r_to_r = txs.get_standard_ct_spend(TxInput(ct_r.get_txid(),0), id_r, ct_r_script, val_r-0.5*self.fee, fee)
-        ct_r_punish = txs.get_standard_ct_punish(TxInput(ct_r.get_txid(),0), self.id_l, ct_script, secret_rev_r, val_r-0.5*self.fee, fee)
+        ct_r_to_r = txs.get_standard_ct_spend(TxInput(ct_r.get_txid(),0), id_r, ct_r_script, int(val_r-0.5*self.fee), fee)
+        ct_r_punish = txs.get_standard_ct_punish(TxInput(ct_r.get_txid(),0), self.id_l, ct_script, secret_rev_r, int(val_r-0.5*self.fee), fee)
         self.transactions.append(('CT_r',ct_l)) 
         self.transactions.append(('CT_r_to_r',ct_r_to_r)) 
         self.transactions.append(('CT_r_punish',ct_r_punish)) # in the real world, this is added only when this state is revoked
@@ -71,7 +71,7 @@ class LightningState(State):
 
 
 class GeneralizedState(State):
-    def __init__(self, ft: Transaction, id_l: Id, id_r: Id, secret_l, secret_r, val_l: float, val_r: float, fee: float, timelockCT: int=consts.timelockCT):
+    def __init__(self, ft: Transaction, id_l: Id, id_r: Id, secret_l, secret_r, val_l: int, val_r: int, fee: int, timelockCT: int=consts.timelockCT):
         self.ft = ft
         self.id_l = id_l
         self.id_r = id_r
@@ -92,7 +92,7 @@ class GeneralizedState(State):
         ct_script = ct.outputs[0].script_pubkey.script
         ct_punish_l = txs.get_gen_punish_tx(TxInput(ct.get_txid(),0), id_l, ct_script, id_as_r, secret_rev_r, val_l+val_r-self.fee, fee, l=True)
         ct_punish_r = txs.get_gen_punish_tx(TxInput(ct.get_txid(),0), id_r, ct_script, id_as_l, secret_rev_l, val_l+val_r-self.fee, fee, l=False)
-        ct_spend = txs.get_gen_split_tx(TxInput(ct.get_txid(),0), id_l, id_r, ct_script, val_l-0.5*fee, val_r-0.5*fee, fee)
+        ct_spend = txs.get_gen_split_tx(TxInput(ct.get_txid(),0), id_l, id_r, ct_script, int(val_l-0.5*fee), int(val_r-0.5*fee), fee)
         self.transactions.append(('CT',ct)) 
         self.transactions.append(('CT spend', ct_spend)) 
         self.transactions.append(('CT_punish_l',ct_punish_l)) # in the real world, the secret for this transaction is shared when the state is revoked

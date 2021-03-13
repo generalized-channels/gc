@@ -13,7 +13,8 @@ from helper import hash256, print_tx
 
 
 ### Change this flag to test either the lightning or the generalized channel construction
-lightning = True
+#lightning = True
+lightning = False
 
 def main():
     ### (Optional) Replace these addresses with others
@@ -25,10 +26,10 @@ def main():
     tx_in2 = TxInput('f6e382f958dbf2e89303e16e4052185e8a30bd97517abc7d498f9c07260848bf', 0) # I in ai
 
     ### Change these values to carry the same amount as the outputs specified above
-    val_a = 0.01
-    val_b = 0.01985
+    val_a = 100000000
+    val_b = 198500000
     # Transaction fee
-    fee = 0.00005
+    fee = 500000000
 
     # create channel between AB
     if lightning:
