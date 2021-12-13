@@ -23,12 +23,12 @@ class Channel:
         self.state_list = []
         self.close_tx = None
 
-    def set_ft(self, ft: Transaction, val_l: float, val_r: float) -> None:
+    def set_ft(self, ft: Transaction, val_l: int, val_r: int) -> None:
         self.ft = ft
         self.val_l = val_l
         self.val_r = val_r
     
-    def create_ft(self, input_l: TxInput, input_r: TxInput, val_l: float, val_r: float) -> Transaction:
+    def create_ft(self, input_l: TxInput, input_r: TxInput, val_l: int, val_r: int) -> Transaction:
         txs_in = [input_l, input_r]
         tx_out = TxOutput(val_l + val_r - self.fee, scripts.get_script_ft_output(self.id_l, self.id_r))
         tx = Transaction(txs_in, [tx_out])
@@ -40,7 +40,7 @@ class Channel:
         input_r.script_sig = Script([sig_r, self.id_r.pk.to_hex()])
         return tx
 
-    def create_close_tx(self, valA: float, valB: float) -> Transaction:
+    def create_close_tx(self, valA: int, valB: int) -> Transaction:
         tx_in = TxInput(self.ft.get_txid(), 0)
         tx_out_l = TxOutput(valA - self.fee, self.id_l.p2pkh)
         tx_out_r = TxOutput(valB - self.fee, self.id_r.p2pkh)
@@ -54,27 +54,27 @@ class Channel:
         return tx
 
     @staticmethod
-    def from_ft(id_l: Id, id_r: Id, ft: Transaction, val_l: float, val_r: float, fee: float, ctype = GENERALIZED_STATE) -> 'Channel':
+    def from_ft(id_l: Id, id_r: Id, ft: Transaction, val_l: int, val_r: int, fee: int, ctype = GENERALIZED_STATE) -> 'Channel':
         channel = Channel(id_l, id_r, fee, ctype)
         channel.set_ft(ft, val_l, val_r)
         channel.update(val_l, val_r, ctype)
         return channel
     
     @staticmethod
-    def from_inputs(id_l: Id, id_r: Id, input_l: TxInput, input_r: TxInput, val_l: float, val_r: float, fee: float, ctype = GENERALIZED_STATE) -> 'Channel':
+    def from_inputs(id_l: Id, id_r: Id, input_l: TxInput, input_r: TxInput, val_l: int, val_r: int, fee: int, ctype = GENERALIZED_STATE) -> 'Channel':
         channel = Channel(id_l, id_r, fee, ctype)
         ft = channel.create_ft(input_l, input_r, val_l, val_r)
         channel.set_ft(ft, val_r, val_r)
         channel.update(val_l, val_r, ctype)
         return channel
 
-    def new_state(self, type: int, tx_in, val_l: float, val_r: float, id_ingrid: Id=None) -> State:
+    def new_state(self, type: int, tx_in, val_l: int, val_r: int, id_ingrid: Id=None) -> State:
         if type == LIGHTNING_STATE:
-            return LightningState(tx_in, self.id_l, self.id_r, val_l-self.fee/2, val_r-self.fee/2, self.fee)
+            return LightningState(tx_in, self.id_l, self.id_r, int(val_l-self.fee/2), int(val_r-self.fee/2), self.fee)
         elif type == GENERALIZED_STATE:
             secret_l = gen_secret()
             secret_r = gen_secret()
-            return GeneralizedState(tx_in, self.id_l, self.id_r, secret_l, secret_r, val_l-self.fee/2, val_r-self.fee/2, self.fee)
+            return GeneralizedState(tx_in, self.id_l, self.id_r, secret_l, secret_r, int(val_l-self.fee/2), int(val_r-self.fee/2), self.fee)
         else:
             raise ValueError(f'Type {type} not recognized.')
 
